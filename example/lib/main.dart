@@ -31,6 +31,9 @@ class MyApp extends StatelessWidget {
           child: SearchMap(
             apiKey: 'YOUR_API_KEY',
             focusNode: FocusNode(),
+            decoration: const InputDecoration(
+              hintText: 'Search for a location',
+            ),
             onClickAddress: (placeDetails) {
               print('Selected Place: ${placeDetails.toJson()}');
             },

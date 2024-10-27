@@ -15,14 +15,14 @@ part 'src/models/prediction.dart';
 
 class SearchMap extends StatefulWidget {
   final String apiKey;
-  final FocusNode focusNode;
+  final FocusNode? focusNode;
   final Function(PlaceDetails) onClickAddress;
   final InputDecoration? decoration;
 
   const SearchMap({
     Key? key,
     required this.apiKey,
-    required this.focusNode,
+    this.focusNode,
     required this.onClickAddress,
     this.decoration,
   }) : super(key: key);
@@ -35,10 +35,9 @@ class _SearchMapState extends State<SearchMap> with SingleTickerProviderStateMix
   final GlobalKey _textFieldKey = GlobalKey();
   final TextEditingController _searchController = TextEditingController();
   late final ApiService _apiService;
-
-  late AnimationController _animationController;
-  late Animation<Offset> _slideAnimation;
-  late Animation<double> _fadeAnimation;
+  late final AnimationController _animationController;
+  late final Animation<Offset> _slideAnimation;
+  late final Animation<double> _fadeAnimation;
 
   List<PlaceDetails> _predictions = [];
   OverlayEntry? _overlayEntry;
@@ -90,6 +89,7 @@ class _SearchMapState extends State<SearchMap> with SingleTickerProviderStateMix
   }
 
   void _onTextChanged() {
+    setState(() {}); // Update state to show/hide the suffix icon.
     if (_searchController.text.isEmpty) {
       _hideOverlay();
     } else {
@@ -122,7 +122,7 @@ class _SearchMapState extends State<SearchMap> with SingleTickerProviderStateMix
     result.fold(
           (error) => log('Error: $error'),
           (details) {
-        widget.onClickAddress(details);
+        widget.onClickAddress.call(details);
         _updateSearchField(prediction.description);
         _hideOverlayWithDelay();
       },
@@ -167,8 +167,8 @@ class _SearchMapState extends State<SearchMap> with SingleTickerProviderStateMix
     return OverlayEntry(
       builder: (context) => Positioned(
         left: offset.dx,
-        top: offset.dy + size.height + 10, // Offset by 10 pixels.
-        width: size.width, // Match width of text field.
+        top: offset.dy + size.height + 10,
+        width: size.width,
         child: Material(
           color: Colors.transparent,
           child: FadeTransition(
@@ -212,59 +212,47 @@ class _SearchMapState extends State<SearchMap> with SingleTickerProviderStateMix
   }
 
   void _clearSearchField() {
-    _searchController.clear();
-    widget.focusNode.unfocus();
+    if (mounted) {
+      setState(() {
+        _searchController.clear();
+        _clearPredictions();
+      });
+    }
+    widget.focusNode?.unfocus();
     _hideOverlay();
   }
 
   InputDecoration _buildDecoration() {
-    return widget.decoration?.copyWith(
+    return InputDecoration(
+      isCollapsed: widget.decoration?.isCollapsed ?? true,
       contentPadding: widget.decoration?.contentPadding ??
           const EdgeInsets.symmetric(vertical: 12),
-      suffixIcon: IconButton(
-        padding: EdgeInsets.zero,
-        icon: const Icon(
-          FontAwesomeIcons.xmark,
-          size: 20,
-          color: Color(0xFFA3A3A3),
-        ),
-        onPressed: _clearSearchField,
-      ),
-    ) ??
-        _defaultDecoration();
-  }
-
-  InputDecoration _defaultDecoration() {
-    return InputDecoration(
-      isCollapsed: true,
-      contentPadding: const EdgeInsets.symmetric(vertical: 12),
-      border: InputBorder.none,
-      labelText: tr('search_address'),
-      hintText: tr('search_address'),
-      labelStyle: const TextStyle(color: Colors.black),
-      hintStyle: const TextStyle(color: Color(0xFFA3A3A3)),
-      alignLabelWithHint: true,
-      floatingLabelBehavior: FloatingLabelBehavior.never,
-      suffixIcon: _buildSuffixIcon(),
+      border: widget.decoration?.border ?? InputBorder.none,
+      enabledBorder: widget.decoration?.enabledBorder ?? InputBorder.none,
+      focusedBorder: widget.decoration?.focusedBorder ?? InputBorder.none,
+      errorBorder: widget.decoration?.errorBorder ?? InputBorder.none,
+      disabledBorder: widget.decoration?.disabledBorder ?? InputBorder.none,
+      focusedErrorBorder: widget.decoration?.focusedErrorBorder ?? InputBorder.none,
+      labelText: widget.decoration?.labelText ?? tr('search_address'),
+      hintText: widget.decoration?.hintText ?? tr('search_address'),
+      labelStyle: widget.decoration?.labelStyle ?? const TextStyle(color: Colors.black),
+      hintStyle: widget.decoration?.hintStyle ?? const TextStyle(color: Color(0xFFA3A3A3)),
+      alignLabelWithHint: widget.decoration?.alignLabelWithHint ?? true,
+      floatingLabelBehavior: widget.decoration?.floatingLabelBehavior ??
+          FloatingLabelBehavior.never,
+      suffixIcon: _searchController.text.isNotEmpty ? _buildSuffixIcon() : null,
     );
   }
 
   Widget _buildSuffixIcon() {
-    return AnimatedCrossFade(
-      duration: const Duration(milliseconds: 200),
-      firstChild: IconButton(
-        padding: EdgeInsets.zero,
-        icon: const Icon(
-          FontAwesomeIcons.xmark,
-          size: 20,
-          color: Color(0xFFA3A3A3),
-        ),
-        onPressed: _clearSearchField,
+    return IconButton(
+      padding: EdgeInsets.zero,
+      icon: const Icon(
+        FontAwesomeIcons.xmark,
+        size: 20,
+        color: Color(0xFFA3A3A3),
       ),
-      secondChild: const SizedBox(),
-      crossFadeState: _searchController.text.isNotEmpty
-          ? CrossFadeState.showFirst
-          : CrossFadeState.showSecond,
+      onPressed: _clearSearchField,
     );
   }
 
@@ -285,7 +273,7 @@ class _SearchMapState extends State<SearchMap> with SingleTickerProviderStateMix
             child: TextField(
               key: _textFieldKey,
               controller: _searchController,
-              focusNode: widget.focusNode,
+              focusNode: widget.focusNode ?? FocusNode(),
               decoration: _buildDecoration(),
               textAlign: TextAlign.start,
               keyboardType: TextInputType.streetAddress,

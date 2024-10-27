@@ -1,6 +1,6 @@
 name: search_map
 description: "A Flutter package for integrating Google Maps Places API with autocomplete and place details retrieval."
-version: 0.0.3
+version: 0.0.4
 homepage: https://github.com/MZzzNn/search_map
 
 environment:
