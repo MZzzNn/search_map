@@ -1,0 +1,25 @@
+name: search_map
+description: "A new Flutter package project."
+version: 0.0.1
+homepage:
+
+environment:
+  sdk: ^3.5.3
+  flutter: ">=1.17.0"
+
+dependencies:
+  dartz: ^0.10.1
+  http: ^1.2.2
+  uuid: ^4.5.1
+  easy_localization: ^3.0.7
+  font_awesome_flutter: ^10.7.0
+
+
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
