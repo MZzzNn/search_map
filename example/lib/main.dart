@@ -16,8 +16,15 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  FocusNode focusNode = FocusNode();
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -30,12 +37,13 @@ class MyApp extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: SearchMap(
             apiKey: 'YOUR_API_KEY',
-            focusNode: FocusNode(),
+            focusNode: focusNode,
             decoration: const InputDecoration(
               hintText: 'Search for a location',
             ),
             onClickAddress: (placeDetails) {
               print('Selected Place: ${placeDetails.toJson()}');
+              focusNode.unfocus();
             },
           ),
         ),

@@ -42,6 +42,7 @@ class _SearchMapState extends State<SearchMap> with SingleTickerProviderStateMix
   List<PlaceDetails> _predictions = [];
   OverlayEntry? _overlayEntry;
   Timer? _debounce;
+  bool _disableOverlay = false;
 
   @override
   void initState() {
@@ -89,8 +90,11 @@ class _SearchMapState extends State<SearchMap> with SingleTickerProviderStateMix
   }
 
   void _onTextChanged() {
-    setState(() {}); // Update state to show/hide the suffix icon.
+    if (_disableOverlay) return;
+
+    setState(() {});
     if (_searchController.text.isEmpty) {
+      _clearPredictions();
       _hideOverlay();
     } else {
       _debounceSearch(_searchController.text);
@@ -118,13 +122,15 @@ class _SearchMapState extends State<SearchMap> with SingleTickerProviderStateMix
   }
 
   void _onPredictionSelected(PlaceDetails prediction) async {
+    _disableOverlay = true;
     final result = await _apiService.getPlaceDetails(prediction.placeId!);
     result.fold(
           (error) => log('Error: $error'),
           (details) {
         widget.onClickAddress.call(details);
         _updateSearchField(prediction.description);
-        _hideOverlayWithDelay();
+        _hideOverlay();
+        _disableOverlay = false;
       },
     );
   }
@@ -138,17 +144,15 @@ class _SearchMapState extends State<SearchMap> with SingleTickerProviderStateMix
 
   void _showPredictionOverlay() {
     _hideOverlay();
-    _overlayEntry = _createOverlayEntry();
-    Overlay.of(context).insert(_overlayEntry!);
+    if (_predictions.isNotEmpty && !_disableOverlay) {
+      _overlayEntry = _createOverlayEntry();
+      Overlay.of(context).insert(_overlayEntry!);
+    }
   }
 
   void _hideOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;
-  }
-
-  void _hideOverlayWithDelay() {
-    _animationController.reverse().whenComplete(_hideOverlay);
   }
 
   void _clearPredictions() {
@@ -212,12 +216,10 @@ class _SearchMapState extends State<SearchMap> with SingleTickerProviderStateMix
   }
 
   void _clearSearchField() {
-    if (mounted) {
-      setState(() {
-        _searchController.clear();
-        _clearPredictions();
-      });
-    }
+    setState(() {
+      _searchController.clear();
+      _clearPredictions();
+    });
     widget.focusNode?.unfocus();
     _hideOverlay();
   }
