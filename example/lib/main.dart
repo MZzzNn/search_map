@@ -9,7 +9,7 @@ void main() async {
   runApp(
     EasyLocalization(
       supportedLocales: [Locale('en'), Locale('es'), Locale('ar')],
-      path: 'assets/translations',
+      path: 'assets/langs',
       fallbackLocale: Locale('en'),
       child: MyApp(),
     ),
@@ -17,6 +17,7 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -24,7 +25,7 @@ class MyApp extends StatelessWidget {
       supportedLocales: context.supportedLocales,
       locale: context.locale,
       home: Scaffold(
-        appBar: AppBar(title: Text('Search Map Example')),
+        appBar: AppBar(title: const Text('Search Map Example')),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: SearchMap(

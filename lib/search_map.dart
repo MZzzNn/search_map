@@ -11,19 +11,20 @@ import 'package:dartz/dartz.dart' hide State;
 import 'package:http/http.dart' as http;
 
 part 'src/api/api_service.dart';
-
 part 'src/models/prediction.dart';
 
 class SearchMap extends StatefulWidget {
   final String apiKey;
   final FocusNode focusNode;
   final Function(PlaceDetails) onClickAddress;
+  final InputDecoration? decoration;
 
   const SearchMap({
     Key? key,
     required this.apiKey,
     required this.focusNode,
     required this.onClickAddress,
+    this.decoration,
   }) : super(key: key);
 
   @override
@@ -44,7 +45,6 @@ class _SearchMapState extends State<SearchMap> {
   void initState() {
     super.initState();
     _apiService = ApiService(widget.apiKey);
-
     _searchController.addListener(_onTextChanged);
   }
 
@@ -63,8 +63,8 @@ class _SearchMapState extends State<SearchMap> {
   Future<void> _fetchPredictions(String query) async {
     final result = await _apiService.getAutocompletePredictions(query);
     result.fold(
-      (error) => log('Error: $error'),
-      (predictions) {
+          (error) => log('Error: $error'),
+          (predictions) {
         setState(() {
           _predictions = predictions;
         });
@@ -77,8 +77,8 @@ class _SearchMapState extends State<SearchMap> {
     _showOverlay = false;
     final result = await _apiService.getPlaceDetails(prediction.placeId!);
     result.fold(
-      (error) => log('Error: $error'),
-      (details) {
+          (error) => log('Error: $error'),
+          (details) {
         widget.onClickAddress(details);
         setState(() {
           _searchController.text = prediction.description ?? '';
@@ -115,8 +115,7 @@ class _SearchMapState extends State<SearchMap> {
   }
 
   OverlayEntry _createOverlayEntry() {
-    final renderBox =
-        _textFieldKey.currentContext?.findRenderObject() as RenderBox;
+    final renderBox = _textFieldKey.currentContext?.findRenderObject() as RenderBox;
     final size = renderBox.size;
     final offset = renderBox.localToGlobal(Offset.zero);
 
@@ -143,6 +142,49 @@ class _SearchMapState extends State<SearchMap> {
     );
   }
 
+  InputDecoration _defaultDecoration() {
+    return InputDecoration(
+      isCollapsed: true, // Ensures correct centering of text content
+      contentPadding: const EdgeInsets.symmetric(vertical: 12), // Center-align hint and label
+      border: InputBorder.none,
+      enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none,
+      labelText: tr('search_address'),
+      hintText: tr('search_address'),
+      labelStyle: const TextStyle(color: Colors.black),
+      hintStyle: const TextStyle(color: Color(0xFFA3A3A3)),
+      alignLabelWithHint: true,
+      floatingLabelBehavior: FloatingLabelBehavior.never,
+      suffixIcon: AnimatedCrossFade(
+        duration: const Duration(milliseconds: 200),
+        firstChild: IconButton(
+          padding: EdgeInsets.zero,
+          icon: const Icon(
+            FontAwesomeIcons.xmark,
+            size: 20,
+            color: Color(0xFFA3A3A3),
+          ),
+          onPressed: () {
+            _searchController.clear();
+            widget.focusNode.unfocus();
+          },
+        ),
+        secondChild: const SizedBox(),
+        crossFadeState: _searchController.text.isNotEmpty
+            ? CrossFadeState.showFirst
+            : CrossFadeState.showSecond,
+      ),
+    );
+  }
+
+  InputDecoration _buildDecoration() {
+    return widget.decoration?.copyWith(
+      contentPadding: widget.decoration?.contentPadding ??
+          const EdgeInsets.symmetric(vertical: 12),
+    ) ??
+        _defaultDecoration();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -157,7 +199,7 @@ class _SearchMapState extends State<SearchMap> {
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12,vertical: 5),
       child: Row(
         children: [
           const Icon(
@@ -171,41 +213,7 @@ class _SearchMapState extends State<SearchMap> {
               key: _textFieldKey,
               controller: _searchController,
               focusNode: widget.focusNode,
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                focusedErrorBorder: InputBorder.none,
-                disabledBorder: InputBorder.none,
-                errorBorder: InputBorder.none,
-                labelText: tr('search_address'),
-                hintText: tr('search_address'),
-                labelStyle: const TextStyle(color: Colors.black),
-                hintStyle: const TextStyle(color: Color(0xFFA3A3A3)),
-                alignLabelWithHint: true,
-                floatingLabelBehavior: FloatingLabelBehavior.never,
-                suffixIcon: AnimatedCrossFade(
-                  duration: const Duration(milliseconds: 200),
-                  firstChild: IconButton(
-                    icon: const Icon(
-                      FontAwesomeIcons.xmark,
-                      size: 20,
-                      color: Color(0xFFA3A3A3),
-                    ),
-                    onPressed: () {
-                      _searchController.clear();
-                      widget.focusNode.unfocus();
-                      _searchController.clear();
-                    },
-                  ),
-                  secondChild: const SizedBox(),
-                  crossFadeState: _searchController.text.isNotEmpty
-                      ? CrossFadeState.showFirst
-                      : CrossFadeState.showSecond,
-                ),
-                isCollapsed: false,
-                isDense: false,
-              ),
+              decoration: _buildDecoration(),
               textAlign: TextAlign.start,
               keyboardType: TextInputType.streetAddress,
               maxLines: 1,
