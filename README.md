@@ -1,6 +1,6 @@
 # Flutter Search Map
 
-A **Flutter package** that integrates with the **Google Maps Places API** to provide a location search field with **autocomplete** and **place details** retrieval. This package simplifies adding map-based search functionality with a user-friendly overlay displaying predictions.
+A **Flutter package** that integrates with the **Google Maps Places API** to provide a location search field with **autocomplete** and **place details** retrieval. This package simplifies adding map-based search functionality with a smooth **animated overlay** displaying predictions and handling user interactions seamlessly.
 
 ---
 
@@ -8,21 +8,23 @@ A **Flutter package** that integrates with the **Google Maps Places API** to pro
 
 - **Google Places Autocomplete**: Get real-time suggestions for addresses.
 - **Place Details Retrieval**: Fetch detailed information (name, address, coordinates) for any selected place.
+- **Smooth Animated Overlay**: Search results appear and disappear with smooth **fade and slide animations**.
 - **Debounce Search**: Reduce redundant API calls with built-in debouncing.
-- **Customizable Overlay**: Display search results dynamically with customization options.
+- **Dynamic Overlay Width**: The overlay matches the text field's width with a 3-pixel vertical offset for perfect alignment.
+- **Customizable Overlay and Icons**: Display search results dynamically with customization options and **Font Awesome** icons.
 - **Localization Support**: Works with `easy_localization` to support multiple languages.
-- **Icon Integration**: Uses `font_awesome_flutter` for elegant search icons.
-- **Session Management**: Manages API sessions efficiently to optimize performance.
+- **Clear Button with Overlay Management**: Automatically hides the overlay when the search is cleared.
+- **Session Management**: Manages API sessions efficiently to optimize performance and minimize costs.
 
 ---
 
 ## Installation
 
-Add the following to your `pubspec.yaml`:
+Add the following dependency to your `pubspec.yaml`:
 
 ```yaml
-dependencies:
-  search_map: any
+dependencies: 
+  search_map: anya
 ```
 
 ## Getting Started
