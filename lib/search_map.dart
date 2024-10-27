@@ -14,129 +14,111 @@ part 'src/api/api_service.dart';
 
 part 'src/models/prediction.dart';
 
-class SearchMapTextField extends StatefulWidget {
+class SearchMap extends StatefulWidget {
   final String apiKey;
   final FocusNode focusNode;
-  final Function(PlaceDetails prediction) onClickAddress;
+  final Function(PlaceDetails) onClickAddress;
 
-  SearchMapTextField({
-    super.key,
+  const SearchMap({
+    Key? key,
     required this.apiKey,
     required this.focusNode,
     required this.onClickAddress,
-  }) : assert(apiKey.isNotEmpty);
+  }) : super(key: key);
 
   @override
-  State<SearchMapTextField> createState() => _SearchMapTextFieldState();
+  State<SearchMap> createState() => _SearchMapState();
 }
 
-class _SearchMapTextFieldState extends State<SearchMapTextField> {
+class _SearchMapState extends State<SearchMap> {
   final GlobalKey _textFieldKey = GlobalKey();
-  late TextEditingController _searchController;
-  late ApiService _apiService;
+  final TextEditingController _searchController = TextEditingController();
+  late final ApiService _apiService;
 
   List<PlaceDetails> _predictions = [];
   OverlayEntry? _overlayEntry;
-  bool _overlayShouldShow = true;
   Timer? _debounce;
+  bool _showOverlay = true;
 
   @override
   void initState() {
     super.initState();
-    _searchController = TextEditingController();
     _apiService = ApiService(widget.apiKey);
 
-    _searchController.addListener(() {
-      if (_overlayShouldShow) {
-        _onChangedDebounced(_searchController.text);
-      }
-      if (_searchController.text.isEmpty) {
-        _predictions.clear();
-        _removeOverlay();
-        setState(() {});
-      }
-    });
+    _searchController.addListener(_onTextChanged);
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
+  void _onTextChanged() {
+    if (_showOverlay) _debounceSearch(_searchController.text);
+    if (_searchController.text.isEmpty) _clearPredictions();
+  }
+
+  void _debounceSearch(String query) {
     _debounce?.cancel();
-    super.dispose();
-  }
-
-  void _onChangedDebounced(String value) {
-    if (_debounce?.isActive ?? false) _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
-      _onChanged(value);
+      if (query.isNotEmpty) _fetchPredictions(query);
     });
   }
 
-  void _onChanged(String value) async {
-    if (value.isNotEmpty) {
-      final result = await _apiService.getAutocompletePredictions(value);
-      result.fold(
-        (exception) {
-          log('Error: $exception');
-        },
-        (predictions) {
-          setState(() {
-            _predictions = predictions;
-          });
-          _showOverlay();
-        },
-      );
-    } else {
-      setState(() {
-        _predictions.clear();
-      });
-      _removeOverlay();
-    }
-  }
-
-  void _onPredictionSelected(PlaceDetails prediction) async {
-    _overlayShouldShow = false;
-    final result = await _apiService.getPlaceDetails(prediction.placeId!);
+  Future<void> _fetchPredictions(String query) async {
+    final result = await _apiService.getAutocompletePredictions(query);
     result.fold(
-      (exception) {
-        log('Error: $exception');
-      },
-      (PlaceDetails placeDetails) {
-        placeDetails = placeDetails.copyWith(
-          description: prediction.description,
-          placeId: prediction.placeId,
-        );
-        widget.onClickAddress.call(placeDetails);
+      (error) => log('Error: $error'),
+      (predictions) {
         setState(() {
-          _searchController.text = prediction.description ?? '';
-          _predictions.clear();
-          widget.focusNode.unfocus();
+          _predictions = predictions;
         });
-        _removeOverlay();
-
-        Future.delayed(Duration(milliseconds: 300), () {
-          _overlayShouldShow = true;
-        });
+        _showPredictionOverlay();
       },
     );
   }
 
-  void _showOverlay() {
-    _removeOverlay();
+  void _onPredictionSelected(PlaceDetails prediction) async {
+    _showOverlay = false;
+    final result = await _apiService.getPlaceDetails(prediction.placeId!);
+    result.fold(
+      (error) => log('Error: $error'),
+      (details) {
+        widget.onClickAddress(details);
+        setState(() {
+          _searchController.text = prediction.description ?? '';
+          _clearPredictions();
+        });
+        _hideOverlay();
+        _resetOverlayVisibility();
+      },
+    );
+  }
+
+  void _showPredictionOverlay() {
+    _hideOverlay();
     _overlayEntry = _createOverlayEntry();
     Overlay.of(context).insert(_overlayEntry!);
   }
 
-  void _removeOverlay() {
+  void _hideOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;
   }
 
+  void _resetOverlayVisibility() {
+    Future.delayed(const Duration(milliseconds: 300), () {
+      _showOverlay = true;
+    });
+  }
+
+  void _clearPredictions() {
+    setState(() {
+      _predictions.clear();
+    });
+    _hideOverlay();
+  }
+
   OverlayEntry _createOverlayEntry() {
-    RenderBox renderBox =
+    final renderBox =
         _textFieldKey.currentContext?.findRenderObject() as RenderBox;
-    var size = renderBox.size;
-    var offset = renderBox.localToGlobal(Offset.zero);
+    final size = renderBox.size;
+    final offset = renderBox.localToGlobal(Offset.zero);
 
     return OverlayEntry(
       builder: (context) => Positioned(
@@ -145,22 +127,16 @@ class _SearchMapTextFieldState extends State<SearchMapTextField> {
         width: size.width,
         child: Material(
           elevation: 4.0,
-          child: Container(
-            color: Colors.white,
-            child: ListView.builder(
-              padding: EdgeInsets.zero,
-              shrinkWrap: true,
-              itemCount: _predictions.length,
-              itemBuilder: (context, index) {
-                final prediction = _predictions[index];
-                return ListTile(
-                  title: Text(prediction.description ?? ''),
-                  onTap: () {
-                    _onPredictionSelected(prediction);
-                  },
-                );
-              },
-            ),
+          child: ListView.builder(
+            itemCount: _predictions.length,
+            shrinkWrap: true,
+            itemBuilder: (context, index) {
+              final prediction = _predictions[index];
+              return ListTile(
+                title: Text(prediction.description ?? ''),
+                onTap: () => _onPredictionSelected(prediction),
+              );
+            },
           ),
         ),
       ),
@@ -172,12 +148,12 @@ class _SearchMapTextFieldState extends State<SearchMapTextField> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.all(Radius.circular(10)),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Color(0xFFA3A3A3).withOpacity(0.25),
+            color: Colors.grey.withOpacity(0.25),
             blurRadius: 5,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -186,8 +162,8 @@ class _SearchMapTextFieldState extends State<SearchMapTextField> {
         children: [
           const Icon(
             FontAwesomeIcons.magnifyingGlass,
-            size: 20,
             color: Colors.grey,
+            size: 20,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -196,19 +172,14 @@ class _SearchMapTextFieldState extends State<SearchMapTextField> {
               controller: _searchController,
               focusNode: widget.focusNode,
               decoration: InputDecoration(
-                fillColor: Colors.white,
-                focusColor: Colors.white,
-                hoverColor: Colors.white,
-                contentPadding: EdgeInsets.only(bottom: 13),
-                filled: true,
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
                 focusedErrorBorder: InputBorder.none,
                 disabledBorder: InputBorder.none,
                 errorBorder: InputBorder.none,
-                labelText: "search_address".tr(),
-                hintText: "search_address".tr(),
+                labelText: tr('search_address'),
+                hintText: tr('search_address'),
                 labelStyle: const TextStyle(color: Colors.black),
                 hintStyle: const TextStyle(color: Color(0xFFA3A3A3)),
                 alignLabelWithHint: true,
@@ -224,7 +195,7 @@ class _SearchMapTextFieldState extends State<SearchMapTextField> {
                     onPressed: () {
                       _searchController.clear();
                       widget.focusNode.unfocus();
-                      _onChanged('');
+                      _searchController.clear();
                     },
                   ),
                   secondChild: const SizedBox(),
@@ -239,13 +210,17 @@ class _SearchMapTextFieldState extends State<SearchMapTextField> {
               keyboardType: TextInputType.streetAddress,
               maxLines: 1,
               textInputAction: TextInputAction.search,
-              onTap: () {
-                widget.focusNode.requestFocus();
-              },
             ),
           ),
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _debounce?.cancel();
+    super.dispose();
   }
 }

@@ -10,8 +10,8 @@ class PlaceDetails {
   final double? longitude;
 
   PlaceDetails({
-    this.placeId,
     this.description,
+    this.placeId,
     this.name,
     this.formattedAddress,
     this.latitude,
@@ -24,36 +24,17 @@ class PlaceDetails {
       description: json['description'],
       name: json['name'],
       formattedAddress: json['formatted_address'],
-      latitude:json['geometry'] !=null ? json['geometry']['location']['lat'] : null,
-      longitude:json['geometry'] !=null ? json['geometry']['location']['lng'] : null,
+      latitude: json['geometry']?['location']?['lat'],
+      longitude: json['geometry']?['location']?['lng'],
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'formatted_address': formattedAddress,
-      'latitude': latitude,
-      'longitude': longitude,
-      'description': description,
-      'place_id': placeId,
-    };
-  }
-  PlaceDetails copyWith({
-    String? description,
-    String? placeId,
-    String? name,
-    String? formattedAddress,
-    double? latitude,
-    double? longitude,
-  }) {
-    return PlaceDetails(
-      description: description ?? this.description,
-      placeId: placeId ?? this.placeId,
-      name: name ?? this.name,
-      formattedAddress: formattedAddress ?? this.formattedAddress,
-      latitude: latitude ?? this.latitude,
-      longitude: longitude ?? this.longitude,
-    );
-  }
+  Map<String, dynamic> toJson() => {
+    'description': description,
+    'place_id': placeId,
+    'name': name,
+    'formatted_address': formattedAddress,
+    'latitude': latitude,
+    'longitude': longitude,
+  };
 }

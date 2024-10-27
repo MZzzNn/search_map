@@ -1,39 +1,95 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Flutter Search Map
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
+A **Flutter package** that integrates with the **Google Maps Places API** to provide a location search field with **autocomplete** and **place details** retrieval. This package simplifies adding map-based search functionality with a user-friendly overlay displaying predictions.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
+---
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+## Key Features
 
-## Features
+- **Google Places Autocomplete**: Get real-time suggestions for addresses.
+- **Place Details Retrieval**: Fetch detailed information (name, address, coordinates) for any selected place.
+- **Debounce Search**: Reduce redundant API calls with built-in debouncing.
+- **Customizable Overlay**: Display search results dynamically with customization options.
+- **Localization Support**: Works with `easy_localization` to support multiple languages.
+- **Icon Integration**: Uses `font_awesome_flutter` for elegant search icons.
+- **Session Management**: Manages API sessions efficiently to optimize performance.
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+---
 
-## Getting started
+## Installation
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+Add the following to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  search_map:
+    git:
+      url: https://github.com/your-repo/search_map.git
+  easy_localization: ^3.0.0
+  http: ^0.13.0
+  uuid: ^3.0.0
+  dartz: ^0.10.0
+  font_awesome_flutter: ^10.1.0
+```
+
+## Getting Started
+
+1. Create a Google Cloud Project and enable the Places API.
+2. Generate an API Key from the Google Cloud Console.
+3. Add your API Key to the widget configuration.
+
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
-
 ```dart
-const like = 'sample';
+import 'package:search_map/search_map.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+import 'package:search_map/search_map.dart';
+import 'package:flutter/material.dart';
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(title: Text('Search Map Example')),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SearchMap(
+            apiKey: 'YOUR_API_KEY',
+            focusNode: FocusNode(),
+            onClickAddress: (placeDetails) {
+              print('Selected: ${placeDetails.description}');
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
 ```
 
-## Additional information
+## Customization
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+- **Customize the overlay style**: Use the `overlayStyle` parameter to customize the overlay appearance.
+- **Localization**: Use `easy_localization` to support multiple languages.
+- **Debounce Time**: Adjust the debounce time with `debounceTime` to balance performance and responsiveness.
+- **Icon Integration**: Use `font_awesome_flutter` for search icons.
+- **Session Management**: Use `sessionManager` to manage API sessions efficiently.
+- **Error Handling**: Handle errors gracefully using `onError` callback.
+- **Customization**: Customize the overlay style, localization, debounce time, icon integration, session management, and
+  error handling.
+- **Localization**: Use `easy_localization` to support multiple languages.
+
+
+## Contributing
+
+Contributions are welcome! Please follow the [MZzzNn](https://github.com/MZzzNn) guidelines.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
