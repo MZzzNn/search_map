@@ -22,14 +22,7 @@ Add the following to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  search_map:
-    git:
-      url: https://github.com/your-repo/search_map.git
-  easy_localization: ^3.0.0
-  http: ^0.13.0
-  uuid: ^3.0.0
-  dartz: ^0.10.0
-  font_awesome_flutter: ^10.1.0
+  search_map: any
 ```
 
 ## Getting Started
