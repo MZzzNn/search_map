@@ -43,7 +43,6 @@ class _SearchMapState extends State<SearchMap> with SingleTickerProviderStateMix
   List<PlaceDetails> _predictions = [];
   OverlayEntry? _overlayEntry;
   Timer? _debounce;
-  bool _showOverlay = true;
 
   @override
   void initState() {
@@ -119,7 +118,6 @@ class _SearchMapState extends State<SearchMap> with SingleTickerProviderStateMix
   }
 
   void _onPredictionSelected(PlaceDetails prediction) async {
-    _showOverlay = false;
     final result = await _apiService.getPlaceDetails(prediction.placeId!);
     result.fold(
           (error) => log('Error: $error'),
